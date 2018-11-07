@@ -23,28 +23,61 @@ class User(telepot.helper.ChatHandler):
 		return userid in permitidos
 
 	def open(self, initial_msg, seed):
+		
+		wait = Comandos().wait()
+				
 		content_type, chat_type, chat_id = telepot.glance(initial_msg)
 		self._is_admin = chat_id in Comandos().permitidos()
 		if not self._is_admin:
-			self.sender.sendMessage("Quem é você?")
+			if chat_id in wait:
+				self.sender.sendMessage("Hum... Acho que você ainda não está na lista")
+				self.sender.sendMessage("mas eu já anotei seu nome")
+				
+			else:
+				self.sender.sendMessage("Quem é você?")
 			return True
-		self.sender.sendMessage('Que bom te ver')
+		
+		
+		
 		if content_type == 'text' and Comandos().is_command(initial_msg['text']):
 			for i in Comandos().executar(initial_msg['text']):
 				self.sender.sendMessage(i)
+		else:
+			self.sender.sendMessage('Que bom te ver')
+		
+		if len(wait) != 0:
+			self.sender.sendMessage('Temos %d pedidos para verificar (/see_wait)' % len(wait))
+		
 		return True  # prevent on_message() from being called on the initial message
 
 	def on_chat_message(self, msg):
 		content_type, chat_type, chat_id = telepot.glance(msg)
-
+		self._is_admin = chat_id in Comandos().permitidos()
+		
 		if content_type != 'text':
 			self.sender.sendMessage('Conexão aqui ta ruim, manda em texto pls')
 			return
 
 		if not self._is_admin:
+			
+		
+			wait = Comandos().wait()
+			if chat_id in wait:
+				self.sender.sendMessage("Hum... Acho que você ainda não está na lista")
+				self.sender.sendMessage("mas eu já anotei seu nome")
+				return
+			
+			nome = msg['from']["first_name"] + ((" " + msg['from']['last_name'] ) if 'last_name' in msg['from'] else "")
+			
+			wait[chat_id] = [nome,msg['text']]
+			
+			arquivo = open("wait.json","w")
+			json.dump(wait,arquivo)
+			arquivo.close()
+		
 			self.sender.sendMessage("Hum... Acho que você não está na lista")
 			self.sender.sendMessage("Vou anotar seu nome aqui, depois entro em contato")
-			
+			return
 		
 		if Comandos().is_command(msg['text']):
 			for i in Comandos().executar(msg['text']):
