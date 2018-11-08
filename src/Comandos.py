@@ -48,6 +48,12 @@ class Comandos:
 		wait = json.load(arquivo,object_hook=jsonKeys2int)
 		arquivo.close()
 		return wait
+	
+	def _see_problems(self,comando):
+		arquivo = open("problemas.json","r")
+		wait = json.load(arquivo)
+		arquivo.close()
+		return sorted(wait)
 
 	def _see_admins(self,comando):
 		def get_value(item):
@@ -57,7 +63,6 @@ class Comandos:
 
 	def _add_admin(self,comando):
 		comando = comando.split(" ")
-		print comando
 		if comando[0] != "" and len(comando) < 2 or not comando[0].isdigit():
 			return["Formato invalido","Tente: /add_admin id nome"]
 		permitidos = self.permitidos()
@@ -88,7 +93,23 @@ class Comandos:
 	def _status_laboratorio(self,comando):
 		maquinas = self._get_maquinas()
 		if comando in ['lcc1','lcc2','lcc3']:
-			return [self._status_maquina(i)[0] for i in sorted(maquinas) if i.startswith(comando)]
+			geral = [self._status_maquina(i)[0] for i in sorted(maquinas) if i.startswith(comando)]
+			ligadas = []
+			desligadas = []
+			defeito = 0
+			
+			for i in geral:
+				if "desligada" in i.lower():
+					desligadas.append(i)
+				elif "ligada" in i.lower():
+					ligadas.append(i)
+				elif "defeito" in i.lower():
+					desligadas.append(i)
+					ligadas.append(i)
+					defeito += 1
+                        return (ligadas if len(ligadas) < len(desligadas) else desligadas) +  ["ligadas: %d, desligadas: %d, defeito: %d, total: %d" %(len(ligadas) - defeito,len(desligadas) - defeito,defeito,len(geral))]
+			
+				
 		else:
 			return ["Está laboratorio não existe","tente digitar apenas o nome do laboratorio"]
 
@@ -98,6 +119,8 @@ class Comandos:
 		if comando in maquinas:
 			if subprocess.Popen("ping %s -c 1 -W 2| grep '1 received'" % maquinas[comando]['ip'], shell=True, stdout=subprocess.PIPE,stderr=subprocess.STDOUT, universal_newlines=True).communicate()[0] != "":
 				return [comando + " Ligada"]
+			elif comando in self._see_problems(""):
+				return [comando + " DEFEITO"]
 			else:
 				return [comando + " Desligada"]
 		else:
@@ -133,3 +156,28 @@ class Comandos:
 			return ["Sucesso"]
 		else:
 			return ["ID invalido ou não cadstrado","Uso: /remove_wait id"]
+	
+	def _add_problem(self,comando):
+		if not comando:
+			return["Formato invalido","Tente: /add_problem laboratorio-numero"]
+		problemas = self._see_problems("")
+		problemas.append(comando)
+		arquivo = open("problemas.json","w")
+		json.dump(problemas,arquivo)
+		arquivo.close()
+		self._remove_wait(comando)
+		return ["Sucesso"]
+	
+	def _remove_problem(self,comando):
+		if not comando:
+			return["Formato invalido","Tente: /remove_problem laboratorio-numero"]
+		problemas = self._see_problems("")
+		if comando in problemas:
+			problemas.remove(comando)
+			arquivo = open("problemas.json","w")
+			json.dump(problemas,arquivo)
+			arquivo.close()
+			
+			return ["Sucesso"]
+		else:
+			return ["Maquina não está com problema"]

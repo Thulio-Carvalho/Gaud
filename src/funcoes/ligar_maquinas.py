@@ -2,7 +2,7 @@ import json
 import paramiko
 from getpass import getpass
 
-arquivo = open("maquians.json","r")
+arquivo = open("maquinas.json","r")
 maquinas = json.load(arquivo)
 arquivo.close()
 

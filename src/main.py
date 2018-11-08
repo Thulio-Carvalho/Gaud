@@ -1,5 +1,4 @@
 #coding:utf-8
-
 import time
 from Comandos import Comandos
 import json
@@ -24,11 +23,10 @@ class User(telepot.helper.ChatHandler):
 
 	def open(self, initial_msg, seed):
 		
-		wait = Comandos().wait()
-				
 		content_type, chat_type, chat_id = telepot.glance(initial_msg)
 		self._is_admin = chat_id in Comandos().permitidos()
 		if not self._is_admin:
+			wait = Comandos().wait()
 			if chat_id in wait:
 				self.sender.sendMessage("Hum... Acho que você ainda não está na lista")
 				self.sender.sendMessage("mas eu já anotei seu nome")
@@ -44,7 +42,7 @@ class User(telepot.helper.ChatHandler):
 				self.sender.sendMessage(i)
 		else:
 			self.sender.sendMessage('Que bom te ver')
-		
+		wait = Comandos().wait()
 		if len(wait) != 0:
 			self.sender.sendMessage('Temos %d pedidos para verificar (/see_wait)' % len(wait))
 		
@@ -87,8 +85,7 @@ class User(telepot.helper.ChatHandler):
 			self.sender.sendMessage("Porque eu não entendi")
 		
 
-	def on__idle(self):
-		self.sender.sendMessage('Já que você não quer nada comigo eu vou fazer outra coisa.')
+	def on__idle(self, event):
 		self.close()
 #LCCControllerBot
 TOKEN = "685454659:AAE3IoeYN-dZyabaeDxIQLaxX-9jid-Pd6k"
