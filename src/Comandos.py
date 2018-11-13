@@ -5,6 +5,7 @@ import re
 from time import sleep, time
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 
 class Comandos:
@@ -32,17 +33,6 @@ class Comandos:
         from Comandos import Comandos as aux
         self = aux()
         return ["Restarting...", "May not work"]
-
-    def permitidos(self):
-        def jsonKeys2int(x):
-            if isinstance(x, dict):
-                return {int(k): v for k, v in x.items()}
-            return x
-
-        arquivo = open("permitidos.json", "r")
-        permitidos = json.load(arquivo, object_hook=jsonKeys2int)
-        arquivo.close()
-        return permitidos
 
     def wait(self):
         def jsonKeys2int(x):
@@ -80,7 +70,7 @@ class Comandos:
         arquivo = open("permitidos.json", "w")
         json.dump(permitidos, arquivo)
         arquivo.close()
-        self._remove_wait(comando)
+        self._remove_wait(comando[0])
         return ["Sucesso"]
 
     def _remove_admin(self, comando):
@@ -103,6 +93,7 @@ class Comandos:
     def _status_laboratorio(self, comando):
         maquinas = self._get_maquinas()
         if comando in ['lcc1', 'lcc2', 'lcc3']:
+            yield "Espera que eu vou verificar"
             geral = [
                 self._status_maquina(i)[0] for i in sorted(maquinas)
                 if i.startswith(comando)
@@ -120,8 +111,7 @@ class Comandos:
                     desligadas.append(i)
                     ligadas.append(i)
                     defeito += 1
-            return (ligadas
-                    if len(ligadas) < len(desligadas) else desligadas) + [
+            return (ligadas if len(ligadas) < len(desligadas) else desligadas) + [
                         "ligadas: %d, desligadas: %d, defeito: %d, total: %d" %
                         (len(ligadas) - defeito, len(desligadas) - defeito,
                          defeito, len(geral))
@@ -137,13 +127,13 @@ class Comandos:
         maquinas = self._get_maquinas()
         if comando in maquinas:
             if subprocess.Popen(
-                    "ping %s -c 1 -W 1 -w 1| grep '1 received'" %
+                    "ping %s -c 1 -W 2| grep '1 received'" %
                     maquinas[comando]['ip'],
                     shell=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     universal_newlines=True).communicate()[0] != "":
-                return [comando + " Ligada"]
+                return [comando + " Ligada" + (" (está na lista de defeitos)" if comando in self._see_problems("") else "")]
             elif comando in self._see_problems(""):
                 return [comando + " DEFEITO"]
             else:
@@ -219,16 +209,19 @@ class Comandos:
                 if i.startswith(comando)
             ]
             return geral
-
-        if comando not in ['lcc1', 'lcc2', 'lcc3']:
+        comando = comando.split()
+        if comando[0] not in ['lcc1', 'lcc2', 'lcc3']:
             yield "Está laboratorio não existe"
             yield "tente digitar apenas o nome do laboratorio"
             return
-        yield "Começando, Tempo de espera: 2 min"
-        lcc = comando
+        lcc = comando[0]
         status = []
         start = time()
-        while time() - start < 120:
+        limite = 60 *(float(comando[1]) if len(comando) == 2 and comando[1].isdigit() else 2)
+        
+        yield "Começando, Tempo de espera: %d min" % (limite/60)
+        
+        while time() - start < limite:
             if status == []:
                 status = status_laboratorio(lcc)
             else:
@@ -266,7 +259,7 @@ class Comandos:
 			yield event
 
         comando = comando.split()
-        if len(comando) != 2 or comando[0] not in ['lcc1', 'lcc2', 'lcc3']:
+        if len(comando) < 1 or comando[0] not in ['lcc1', 'lcc2', 'lcc3']:
             yield "Fromato invalido"
             yield "Tente laboratorio dd/mm"
             return
@@ -278,7 +271,11 @@ class Comandos:
             "lcc3":
             "https://calendar.google.com/calendar/htmlembed?src=computacao.ufcg.edu.br_noalttgqttm3c5pm94k3ttbj1k@group.calendar.google.com&mode=AGENDA"
         }[comando[0]]
-        data = comando[1]
+        if len(comando) == 1:
+			data = ("%s/%s" %(datetime.now().day,datetime.now().month))
+		else:
+			data = comando[1]
+        yield "Vou dar uma olhada"
         if data == '*':
 			cont = 0
 			for i in get_events(site):
@@ -293,6 +290,8 @@ class Comandos:
 				if i[1][0].startswith(data):
 					yield ("%s (%s - %s)" % (i[0], i[1][1], i[2][1]))
 					cont += 1
+				elif cont:
+					return
 			if not cont:
 
 				yield "Hum..., parece que não temos nada previsto"
