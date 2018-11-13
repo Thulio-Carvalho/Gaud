@@ -35,6 +35,17 @@ class Comandos:
 		self = aux()
 		return ["Restarting...", "May not work"]
 
+	def permitidos(self):
+		def jsonKeys2int(x):
+			if isinstance(x, dict):
+				return {int(k): v for k, v in x.items()}
+			return x
+
+		arquivo = open("permitidos.json", "r")
+		permitidos = json.load(arquivo, object_hook=jsonKeys2int)
+		arquivo.close()
+		return permitidos
+
 	def wait(self):
 		def jsonKeys2int(x):
 			if isinstance(x, dict):

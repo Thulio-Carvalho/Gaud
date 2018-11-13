@@ -5,6 +5,7 @@ import json
 import telepot
 from telepot.loop import MessageLoop
 from telepot.delegate import per_chat_id, create_open, pave_event_space
+import sys
 
 
 class User(telepot.helper.ChatHandler):
@@ -93,10 +94,13 @@ class User(telepot.helper.ChatHandler):
 		self.close()
 
 
-# LCCControllerBot
-# TOKEN = "685454659:AAE3IoeYN-dZyabaeDxIQLaxX-9jid-Pd6k"
-# LCCTestBot
-TOKEN = "703837943:AAEqwcEWl6Qa2u_fJx3ojqkhR0HB7RGcF54"
+if len(sys.argv) != 1:
+	# LCCControllerBot
+	# TOKEN = "685454659:AAE3IoeYN-dZyabaeDxIQLaxX-9jid-Pd6k"
+	TOKEN = sys.argv[1]
+else:
+	# LCCTestBot
+	TOKEN = "703837943:AAEqwcEWl6Qa2u_fJx3ojqkhR0HB7RGcF54"
 
 bot = telepot.DelegatorBot(TOKEN, [
 	pave_event_space()(per_chat_id(), create_open, User, timeout=300),
