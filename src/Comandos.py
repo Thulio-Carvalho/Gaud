@@ -252,9 +252,11 @@ class Comandos:
 			return geral
 
 		comando = comando.split()
-		if comando[0] not in ['lcc1', 'lcc2', 'lcc3']:
-			yield "Está laboratorio não existe"
-			yield "tente digitar apenas o nome do laboratorio"
+		if len(comando) == 0 or comando[0] not in ['lcc1', 'lcc2', 'lcc3']:
+			if len(comando) != 0:
+				yield "Está laboratorio não existe"
+				yield "tente digitar apenas o nome do laboratorio"
+			yield "/agenda laboratorio tempo"
 			return
 		lcc = comando[0]
 		status = []
