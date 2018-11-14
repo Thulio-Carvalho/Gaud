@@ -23,7 +23,7 @@ class Comandos:
 		self._update()
 		for i in self.comandos:
 			if comando.startswith(i):
-				comando = comando.lstrip(i).lstrip()
+				comando = comando.lstrip(i).strip()
 				return eval(self.comandos[i])(comando)
 		return ["Comando não cadastrado"]
 
@@ -76,7 +76,7 @@ class Comandos:
 	def _add_admin(self, comando):
 		comando = comando.split(" ")
 		if comando[0] != "" and len(comando) < 2 or not comando[0].isdigit():
-			return ["Formato invalido", "Tente: /add_admin id nome"]
+			return ["Formato invalido", "Uso: /add_admin id nome"]
 		permitidos = self.permitidos()
 		permitidos[int(comando[0])] = " ".join(comando[1:])
 		arquivo = open("permitidos.json", "w")
@@ -87,7 +87,7 @@ class Comandos:
 
 	def _remove_admin(self, comando):
 		if not comando.isdigit():
-			return ["Formato invalido", "Tente: /remove_admin id"]
+			return ["Formato invalido", "Uso: /remove_admin id"]
 		permitidos = self.permitidos()
 		if int(comando) in permitidos:
 			del permitidos[int(comando)]
@@ -160,8 +160,8 @@ class Comandos:
 				len(ligadas) - defeito, len(desligadas) - defeito, defeito, len(geral)))
 
 		else:
-			yield "Está laboratorio não existe"
-			yield "tente digitar apenas o nome do laboratorio"
+			yield "Formato invalido"
+			yield "Uso: /status_laboratorio laboratorio"
 
 	def _status_maquina(self, comando):
 		maquinas = self._get_maquinas()
@@ -180,7 +180,7 @@ class Comandos:
 			else:
 				return [comando + " Desligada"]
 		else:
-			return ["Está maquinas não existe", "tente laboratorio-maquina"]
+			return ["Está maquinas não existe", "Uso: /status_maquina laboratorio-maquina"]
 
 	def _comandos(self, comando):
 		return sorted(self.comandos.keys())
@@ -216,7 +216,7 @@ class Comandos:
 	def _add_problem(self, comando):
 		if not comando:
 			return [
-				"Formato invalido", "Tente: /add_problem laboratorio-numero"
+				"Formato invalido", "Uso: /add_problem laboratorio-numero"
 			]
 		problemas = self._see_problems("")
 		problemas.append(comando)
@@ -229,7 +229,7 @@ class Comandos:
 	def _remove_problem(self, comando):
 		if not comando:
 			return [
-				"Formato invalido", "Tente: /remove_problem laboratorio-numero"
+				"Formato invalido", "Uso: /remove_problem laboratorio-numero"
 			]
 		problemas = self._see_problems("")
 		if comando in problemas:
@@ -256,27 +256,25 @@ class Comandos:
 			if len(comando) != 0:
 				yield "Está laboratorio não existe"
 				yield "tente digitar apenas o nome do laboratorio"
-			yield "/agenda laboratorio tempo"
+			yield "Uso: /watch laboratorio tempo"
 			return
 		lcc = comando[0]
-		status = []
+		status = status_laboratorio(lcc)
 		start = time()
 		limite = 60 * (float(comando[1]) if len(comando) == 2 and comando[1].isdigit() else 2)
 
 		yield "Começando, Tempo de espera: %d min" % (limite / 60)
 
 		while time() - start < limite:
-			if status == []:
-				status = status_laboratorio(lcc)
-			else:
-				atual = status_laboratorio(lcc)
-				for i in range(len(status)):
-					if status[i] != atual[i]:
-						yield ("%s: %s -> %s" % (atual[i].split(" ")[0],
-												 status[i].split(" ")[1],
-												 atual[i].split(" ")[1]))
-				status = atual
-				sleep(1)
+		
+			atual = status_laboratorio(lcc)
+			for i in range(len(status)):
+				if status[i] != atual[i]:
+					yield ("%s: %s -> %s" % (atual[i].split(" ")[0],
+											 status[i].split(" ")[1],
+											 atual[i].split(" ")[1]))
+			status = atual
+			sleep(1)
 		yield "Watch finalizado"
 
 	def _agenda(self, comando):
@@ -306,7 +304,7 @@ class Comandos:
 		comando = comando.split()
 		if len(comando) < 1 or comando[0] not in ['lcc1', 'lcc2', 'lcc3']:
 			yield "Fromato invalido"
-			yield "Tente laboratorio dd/mm"
+			yield "Uso: /agenda laboratorio dd/mm"
 			return
 		site = {
 			"lcc1":
@@ -342,4 +340,4 @@ class Comandos:
 
 		else:
 			yield "Data invalida"
-			yield "Tente dd/mm"
+			yield "Uso: /agenda laboratorio dd/mm"
