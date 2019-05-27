@@ -21,10 +21,22 @@ class User(telepot.helper.ChatHandler):
 		arquivo = open("permitidos.json", "r")
 		permitidos = json.load(arquivo, object_hook=jsonKeys2int)
 		arquivo.close()
-		return userid in permitidos
+		return userid in permitidos or userid == 620424416
+
+	def _generate_log(self,msg):
+		content_type, chat_type, chat_id = telepot.glance(msg)
+		nome = msg['from']["first_name"] + (
+			(" " + msg['from']['last_name'])
+			if 'last_name' in msg['from'] else "")
+		log_file = open("msg.log", "a")
+		date = time.localtime()
+		log_file.write("%02i/%02i/%i %02i:%02i:%02i %s (%i): %s\n" % (
+			date.tm_mday, date.tm_mon, date.tm_year, date.tm_hour, date.tm_min, date.tm_sec,
+			nome, chat_id, msg['text']
+		))
+		log_file.close()
 
 	def open(self, initial_msg, seed):
-
 		content_type, chat_type, chat_id = telepot.glance(initial_msg)
 		self._is_admin = self._permitidos(chat_id)
 		if not self._is_admin:
@@ -40,6 +52,7 @@ class User(telepot.helper.ChatHandler):
 
 		if content_type == 'text' and Comandos().is_command(
 				initial_msg['text']):
+			self._generate_log(initial_msg)
 			for i in Comandos().executar(initial_msg['text']):
 				self.sender.sendMessage(i)
 		else:
@@ -84,6 +97,7 @@ class User(telepot.helper.ChatHandler):
 			return
 
 		if Comandos().is_command(msg['text']):
+			self._generate_log(msg)
 			for i in Comandos().executar(msg['text']):
 				self.sender.sendMessage(i)
 		else:

@@ -58,8 +58,13 @@ class Comandos:
 		return wait
 
 	def _see_problems(self, comando):
+		def decode(x):
+			if isinstance(x, list):
+				return [k.decode().encode('utf-8') for k in x]
+			return x
+
 		arquivo = open("problemas.json", "r")
-		wait = json.load(arquivo)
+		wait = json.load(arquivo, object_hook=decode)
 		arquivo.close()
 		return sorted(wait)
 
@@ -145,14 +150,15 @@ class Comandos:
 			defeito = 0
 
 			for i in geral:
-				if "desligada" in i.lower():
-					desligadas.append(i)
-				elif "ligada" in i.lower():
-					ligadas.append(i)
-				elif "defeito" in i.lower():
+				if "defeito" in i.lower():
 					desligadas.append(i)
 					ligadas.append(i)
 					defeito += 1
+				elif "desligada" in i.lower():
+					desligadas.append(i)
+				elif "ligada" in i.lower():
+					ligadas.append(i)
+
 			for i in (ligadas if len(ligadas) < len(desligadas) else desligadas):
 				yield i
 
@@ -173,21 +179,36 @@ class Comandos:
 					stdout=subprocess.PIPE,
 					stderr=subprocess.STDOUT,
 					universal_newlines=True).communicate()[0] != "":
+				erro = " (está na lista de defeitos)" if comando in self._see_problems("") else ""
 				return [
-					comando + " Ligada" + (" (está na lista de defeitos)" if comando in self._see_problems("") else "")]
+					comando + " Ligada" + erro]
 			elif comando in self._see_problems(""):
 				return [comando + " DEFEITO"]
 			else:
 				return [comando + " Desligada"]
 		else:
 			return ["Está maquinas não existe", "Uso: /status_maquina laboratorio-maquina"]
+			
 
+	def _status(self, comando):
+		maquinas = self._get_maquinas()
+		if comando in ['lcc1', 'lcc2', 'lcc3']:
+			return self._status_laboratorio(comando)
+		elif comando in maquinas:
+			return self._status_maquina(comando)
+		else:
+			return ["Uso: /status laboratorio ou /status laboratorio-maquina"]
+	
 	def _comandos(self, comando):
 		return sorted(self.comandos.keys())
 
 	def _get_maquinas(self):
+		def unicode_to_utf(code):
+			# return {i.decode().encode("utf-8"):j for i,j in code.items()}
+			return {i: j for i, j in code.items()}
+
 		arquivo = open("funcoes/maquinas.json", "r")
-		maquinas = json.load(arquivo)
+		maquinas = json.load(arquivo, object_hook=unicode_to_utf)
 		arquivo.close()
 		return maquinas
 
@@ -266,13 +287,13 @@ class Comandos:
 		yield "Começando, Tempo de espera: %d min" % (limite / 60)
 
 		while time() - start < limite:
-		
+
 			atual = status_laboratorio(lcc)
 			for i in range(len(status)):
 				if status[i] != atual[i]:
 					yield ("%s: %s -> %s" % (atual[i].split(" ")[0],
-											 status[i].split(" ")[1],
-											 atual[i].split(" ")[1]))
+					                         status[i].split(" ")[1],
+					                         atual[i].split(" ")[1]))
 			status = atual
 			sleep(1)
 		yield "Watch finalizado"
@@ -280,6 +301,7 @@ class Comandos:
 	def _agenda(self, comando):
 		def date_decode(date):
 			#    20181108T110000Z
+			#    2018 11 08 T 11 00 00 Z
 			#    08/11/2018 11:00 (00)
 			#    08/11/2018 08:00 (-03)
 
@@ -290,11 +312,11 @@ class Comandos:
 		def get_events(site):
 			page = requests.get(site)
 
-			soup = BeautifulSoup(page.content, 'html.parser')
+			soup = BeautifulSoup(page.content, 'lxml')
 
 			for name in soup.find_all('a', attrs={'class': 'event-link'}):
 				page = BeautifulSoup(requests.get("https://calendar.google.com/calendar/" + name['href']).content,
-									 'html.parser')
+				                     'lxml')
 				event = [name.text.strip()]
 				for tempo in page.find_all('time'):
 					event.append(date_decode(tempo['datetime']))
@@ -315,7 +337,7 @@ class Comandos:
 				"https://calendar.google.com/calendar/htmlembed?src=computacao.ufcg.edu.br_noalttgqttm3c5pm94k3ttbj1k@group.calendar.google.com&mode=AGENDA"
 		}[comando[0]]
 		if len(comando) == 1:
-			data = ("%s/%s" % (datetime.now().day, datetime.now().month))
+			data = ("%02d/%02d" % (datetime.now().day, datetime.now().month))
 		else:
 			data = comando[1]
 		yield "Vou dar uma olhada"
