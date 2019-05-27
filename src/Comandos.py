@@ -188,7 +188,17 @@ class Comandos:
 				return [comando + " Desligada"]
 		else:
 			return ["Está maquinas não existe", "Uso: /status_maquina laboratorio-maquina"]
+			
 
+	def _status(self, comando):
+		maquinas = self._get_maquinas()
+		if comando in ['lcc1', 'lcc2', 'lcc3']:
+			return self._status_laboratorio(comando)
+		elif comando in maquinas:
+			return self._status_maquina(comando)
+		else:
+			return ["Uso: /status laboratorio ou /status laboratorio-maquina"]
+	
 	def _comandos(self, comando):
 		return sorted(self.comandos.keys())
 
@@ -327,7 +337,7 @@ class Comandos:
 				"https://calendar.google.com/calendar/htmlembed?src=computacao.ufcg.edu.br_noalttgqttm3c5pm94k3ttbj1k@group.calendar.google.com&mode=AGENDA"
 		}[comando[0]]
 		if len(comando) == 1:
-			data = ("%s/%s" % (datetime.now().day, datetime.now().month))
+			data = ("%02d/%02d" % (datetime.now().day, datetime.now().month))
 		else:
 			data = comando[1]
 		yield "Vou dar uma olhada"
