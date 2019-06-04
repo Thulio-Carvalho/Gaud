@@ -30,6 +30,7 @@ class User(telepot.helper.ChatHandler):
 			if 'last_name' in msg['from'] else "")
 		log_file = open("msg.log", "a")
 		date = time.localtime()
+		#DD/MM/YYYY HH:mm:ss nome (id): msg
 		log_file.write("%02i/%02i/%i %02i:%02i:%02i %s (%i): %s\n" % (
 			date.tm_mday, date.tm_mon, date.tm_year, date.tm_hour, date.tm_min, date.tm_sec,
 			nome, chat_id, msg['text']

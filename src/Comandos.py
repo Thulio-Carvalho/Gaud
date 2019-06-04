@@ -14,10 +14,14 @@ class Comandos:
 		arquivo = open("comandos.json", "r")
 		self.comandos = json.load(arquivo)
 		arquivo.close()
+		
+		arquivo = open("hidden_comandos.json", "r")
+		self.hidden_comandos = json.load(arquivo)
+		arquivo.close()
 
 	def is_command(self, text):
 		self._update()
-		return any(text.startswith(x) for x in self.comandos)
+		return any(text.startswith(x) for x in self.comandos + self.hidden_comando)
 
 	def executar(self, comando):
 		self._update()
@@ -112,7 +116,7 @@ class Comandos:
 			yield "tente digitar apenas o nome do laboratorio"
 			return
 
-		yield "Comançando (Talvez nem todas as maquinas liguem)"
+		yield "Começando (Talvez nem todas as maquinas liguem)"
 		maquinas = self._get_maquinas()
 
 		username = "USERNAME"
@@ -128,7 +132,7 @@ class Comandos:
 
 		sever = paramiko.SSHClient()
 		sever.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-		sever.connect('sever.lcc.ufcg.edu.br', port=23456, username=username, password=password)
+		sever.connect(site, port=23456, username=username, password=password)
 
 		for i in maquinas:
 			if i.startswith(comando) and maquinas[i]["mac"] != "":
@@ -136,6 +140,9 @@ class Comandos:
 
 		sever.close()
 		yield "Finalizado"
+	
+	def _ligar(self, comando):
+		return self._ligar_laboratorio(comando)
 
 	def _status_laboratorio(self, comando):
 		maquinas = self._get_maquinas()
@@ -201,7 +208,10 @@ class Comandos:
 	
 	def _comandos(self, comando):
 		return sorted(self.comandos.keys())
-
+	
+	def _hidden(self, comando):
+		return sorted(self.hidden_comandos.keys())
+	
 	def _get_maquinas(self):
 		def unicode_to_utf(code):
 			# return {i.decode().encode("utf-8"):j for i,j in code.items()}
@@ -324,8 +334,8 @@ class Comandos:
 				yield event
 
 		comando = comando.split()
-		if len(comando) < 1 or comando[0] not in ['lcc1', 'lcc2', 'lcc3']:
-			yield "Fromato invalido"
+		if len(comando) < 1 or comando[0] not in ['lcc1', 'lcc2', 'lcc3', 'RE10']:
+			yield "Formato invalido"
 			yield "Uso: /agenda laboratorio dd/mm"
 			return
 		site = {
@@ -334,10 +344,12 @@ class Comandos:
 			"lcc2":
 				"https://calendar.google.com/calendar/htmlembed?src=computacao.ufcg.edu.br_80qc5chl59nmv2268aef8hp528@group.calendar.google.com&mode=AGENDA",
 			"lcc3":
-				"https://calendar.google.com/calendar/htmlembed?src=computacao.ufcg.edu.br_noalttgqttm3c5pm94k3ttbj1k@group.calendar.google.com&mode=AGENDA"
+				"https://calendar.google.com/calendar/htmlembed?src=computacao.ufcg.edu.br_noalttgqttm3c5pm94k3ttbj1k@group.calendar.google.com&mode=AGENDA",
+			"RE10":
+				"https://calendar.google.com/calendar/htmlembed?src=computacao.ufcg.edu.br_qnh45rjt7jg8917h3irsoob37k@group.calendar.google.com&mode=AGENDA"
 		}[comando[0]]
 		if len(comando) == 1:
-			data = ("%02d/%02d" % (datetime.now().day, datetime.now().month))
+			data = ("%02d/%02d/%04d" % (datetime.now().day, datetime.now().month, datetime.now().year))
 		else:
 			data = comando[1]
 		yield "Vou dar uma olhada"
@@ -363,3 +375,8 @@ class Comandos:
 		else:
 			yield "Data invalida"
 			yield "Uso: /agenda laboratorio dd/mm"
+
+	def _notificacao(self, comando):
+		yield "Em Construção"
+		return
+
