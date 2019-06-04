@@ -108,13 +108,10 @@ class User(telepot.helper.ChatHandler):
 		self.close()
 
 
-if len(sys.argv) != 1:
-	# LCCControllerBot
-	# TOKEN = "685454659:AAE3IoeYN-dZyabaeDxIQLaxX-9jid-Pd6k"
-	TOKEN = sys.argv[1]
-else:
-	# LCCTestBot
-	TOKEN = "703837943:AAEqwcEWl6Qa2u_fJx3ojqkhR0HB7RGcF54"
+with open('../config.json') as config_file:
+	config = json.load(config_file)
+
+TOKEN = config['TOKEN']
 
 bot = telepot.DelegatorBot(TOKEN, [
 	pave_event_space()(per_chat_id(), create_open, User, timeout=300),
