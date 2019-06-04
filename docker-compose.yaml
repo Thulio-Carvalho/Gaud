@@ -1,9 +1,0 @@
-version: '3'
-services:
-  bot:
-    image: gaud-bot
-    build: .
-    restart: always
-    container_name: Gaud
-    volumes:
-      - ./src/:/usr/src/app/src/
