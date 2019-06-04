@@ -114,3 +114,5 @@ venv.bak/
 # IDE
 .idea/
 .vscode/
+
+config.json
