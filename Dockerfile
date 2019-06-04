@@ -9,4 +9,4 @@ COPY . .
 
 WORKDIR src/
 
-CMD [ "python", "./main.py", "685454659:AAE3IoeYN-dZyabaeDxIQLaxX-9jid-Pd6k" ]
+CMD [ "python", "./main.py" ]
