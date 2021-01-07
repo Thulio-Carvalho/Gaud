@@ -5,4 +5,4 @@ pymongo==3.7.2
 requests==2.18.4
 telepot==12.7
 urllib3==1.22
-lxml==4.3.3
+lxml==4.6.2
